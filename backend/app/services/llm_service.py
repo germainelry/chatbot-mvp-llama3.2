@@ -19,6 +19,11 @@ except ImportError:
 
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
+# Auto-send threshold: AI responses with confidence >= this value are sent automatically
+# Lower values = more automation but potentially lower quality
+# Higher values = more agent review but better quality assurance
+AUTO_SEND_THRESHOLD = float(os.getenv("AUTO_SEND_THRESHOLD", "0.65"))
+
 
 def search_knowledge_base(query: str, db: Session) -> List[Dict]:
     """
@@ -112,7 +117,9 @@ async def generate_ai_response(
                 "response": response,
                 "confidence_score": confidence,
                 "matched_articles": matched_articles,
-                "reasoning": "Generated using Ollama LLM"
+                "reasoning": "Generated using Ollama LLM",
+                "auto_send_threshold": AUTO_SEND_THRESHOLD,
+                "should_auto_send": confidence >= AUTO_SEND_THRESHOLD
             }
         except Exception as e:
             print(f"Ollama failed: {e}, using fallback")
@@ -124,7 +131,9 @@ async def generate_ai_response(
         "response": response,
         "confidence_score": confidence,
         "matched_articles": matched_articles,
-        "reasoning": "Generated using fallback logic (Ollama unavailable)"
+        "reasoning": "Generated using fallback logic (Ollama unavailable)",
+        "auto_send_threshold": AUTO_SEND_THRESHOLD,
+        "should_auto_send": confidence >= AUTO_SEND_THRESHOLD
     }
 
 

@@ -21,7 +21,16 @@ ollama serve
 ollama pull llama3.2
 ```
 
-4. Run the server:
+4. Configure environment (optional):
+```bash
+# Edit .env file to customize settings:
+# - OLLAMA_MODEL: LLM model to use (default: llama3.2)
+# - AUTO_SEND_THRESHOLD: Confidence threshold for auto-sending (default: 0.65)
+#   Range: 0.0 to 1.0 (65% = 0.65)
+#   Lower = more automation, Higher = more agent review
+```
+
+5. Run the server:
 ```bash
 uvicorn app.main:app --reload
 ```

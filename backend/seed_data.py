@@ -2,9 +2,17 @@
 Seed database with sample knowledge base articles and demo conversations.
 Run this after initializing the database.
 """
-from app.database import SessionLocal, init_db
-from app.models import KnowledgeBase, Conversation, Message, ConversationStatus, MessageType
 from datetime import datetime, timedelta
+
+from app.database import SessionLocal, init_db
+from app.models import (
+    Conversation,
+    ConversationStatus,
+    KnowledgeBase,
+    Message,
+    MessageType,
+)
+
 
 def seed_knowledge_base(db):
     """Seed knowledge base with sample articles."""
@@ -12,69 +20,69 @@ def seed_knowledge_base(db):
         {
             "title": "Return & Refund Policy",
             "content": """Our return policy allows you to return items within 30 days of purchase for a full refund. Items must be in original condition with tags attached. To initiate a return:
-1. Log into your account and go to Order History
-2. Select the order and click 'Request Return'
-3. Print the prepaid return label
-4. Ship the item back within 5 business days
+            1. Log into your account and go to Order History
+            2. Select the order and click 'Request Return'
+            3. Print the prepaid return label
+            4. Ship the item back within 5 business days
 
-Refunds are processed within 5-7 business days after we receive the return. The refund will be credited to your original payment method. If you paid with a gift card, the refund will be issued as store credit.""",
-            "category": "Returns",
-            "tags": "return,refund,exchange,policy,30 days"
+            Refunds are processed within 5-7 business days after we receive the return. The refund will be credited to your original payment method. If you paid with a gift card, the refund will be issued as store credit.""",
+                        "category": "Returns",
+                        "tags": "return,refund,exchange,policy,30 days"
         },
         {
             "title": "Shipping Information",
             "content": """We offer multiple shipping options:
 
-Standard Shipping (3-5 business days): $5.99 or FREE on orders over $50
-Express Shipping (2-3 business days): $12.99
-Overnight Shipping (1 business day): $24.99
+            Standard Shipping (3-5 business days): $5.99 or FREE on orders over $50
+            Express Shipping (2-3 business days): $12.99
+            Overnight Shipping (1 business day): $24.99
 
-Orders placed before 2 PM EST ship the same day. You'll receive a tracking number via email once your order ships. Track your order anytime by logging into your account or clicking the tracking link in your shipping confirmation email.
+            Orders placed before 2 PM EST ship the same day. You'll receive a tracking number via email once your order ships. Track your order anytime by logging into your account or clicking the tracking link in your shipping confirmation email.
 
-We ship to all 50 US states and international locations. International shipping times vary by destination (typically 7-14 business days).""",
-            "category": "Shipping",
-            "tags": "shipping,delivery,tracking,express,standard,overnight,free shipping"
+            We ship to all 50 US states and international locations. International shipping times vary by destination (typically 7-14 business days).""",
+                        "category": "Shipping",
+                        "tags": "shipping,delivery,tracking,express,standard,overnight,free shipping"
         },
         {
             "title": "Account Management & Password Reset",
             "content": """To reset your password:
-1. Go to the login page and click 'Forgot Password'
-2. Enter your email address
-3. Check your email for a password reset link (valid for 24 hours)
-4. Click the link and create a new password
+            1. Go to the login page and click 'Forgot Password'
+            2. Enter your email address
+            3. Check your email for a password reset link (valid for 24 hours)
+            4. Click the link and create a new password
 
-Password requirements: At least 8 characters, including one uppercase letter, one number, and one special character.
+            Password requirements: At least 8 characters, including one uppercase letter, one number, and one special character.
 
-To update your account information:
-- Log into your account
-- Click on 'Account Settings'
-- Update your email, shipping address, or payment methods
-- Click 'Save Changes'
+            To update your account information:
+            - Log into your account
+            - Click on 'Account Settings'
+            - Update your email, shipping address, or payment methods
+            - Click 'Save Changes'
 
-If you're having trouble accessing your account, contact our support team with your order number and we'll help you regain access.""",
-            "category": "Account",
-            "tags": "account,login,password,reset,email,settings,profile"
+            If you're having trouble accessing your account, contact our support team with your order number and we'll help you regain access.""",
+                        "category": "Account",
+                        "tags": "account,login,password,reset,email,settings,profile"
         },
         {
             "title": "Product Specifications & Warranty",
             "content": """All our products come with detailed specifications on the product page. Look for the 'Specifications' tab for:
-- Dimensions and weight
-- Materials and composition
-- Care instructions
-- Color options
-- Compatibility information
+            - Dimensions and weight
+            - Materials and composition
+            - Care instructions
+            - Color options
+            - Compatibility information
 
-Warranty Information:
-All products include a 1-year manufacturer's warranty covering defects in materials and workmanship. This does not cover normal wear and tear, misuse, or accidental damage.
+            Warranty Information:
+            All products include a 1-year manufacturer's warranty covering defects in materials and workmanship. This does not cover normal wear and tear, misuse, or accidental damage.
 
-To file a warranty claim:
-1. Contact our support team with your order number
-2. Provide photos of the defect
-3. We'll review and either replace or repair the item
+            To file a warranty claim:
+            1. Contact our support team with your order number
+            2. Provide photos of the defect
+            3. We'll review and either replace or repair the item
 
-Extended warranty options are available at checkout for select items.""",
-            "category": "Products",
-            "tags": "product,specifications,specs,warranty,guarantee,quality,details"
+            Extended warranty options are available at checkout for select items.""",
+                        "category": "Products",
+                        "tags": "product,specifications,specs,warranty,guarantee,quality,details"
         }
     ]
     
