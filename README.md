@@ -1,25 +1,25 @@
 # AI Customer Support Assistant MVP
 
-A full-stack AI-powered customer support system with **Human-in-the-Loop (HITL)** capabilities, designed to demonstrate modern agentic AI systems, prompt engineering, and product metrics for AI applications.
+A full-stack AI-powered customer support system with **Human-in-the-Loop (HITL)** capabilities, powered by Ollama's Llama 3.2 LLM model. This MVP demonstrates modern agentic AI systems, prompt engineering, and product metrics for AI applications.
 
-## 🎯 Project Goals
+## Project Goals
 
-Built to develop foundational skills and knowledge in AI chatbots and agentic systems, this MVP demonstrates:
+This MVP provides:
 
-- ✅ Agentic AI systems with LLM integration
-- ✅ Human-in-the-Loop workflows (pre-send & post-send)
-- ✅ Product metrics for AI systems (deflection rate, resolution rate, feedback sentiment)
-- ✅ Feedback collection architecture for model improvement (RLHF)
-- ✅ Knowledge base integration (simple RAG)
-- ✅ Agent supervision dashboard
-- ✅ Real-time analytics
+- Agentic AI systems with LLM integration using Ollama Llama 3.2
+- Human-in-the-Loop workflows (pre-send & post-send)
+- Product metrics for AI systems (deflection rate, resolution rate, feedback sentiment)
+- Feedback collection architecture for model improvement (RLHF)
+- Knowledge base integration with RAG (Retrieval-Augmented Generation)
+- Agent supervision dashboard
+- Real-time analytics
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Backend (FastAPI + SQLite)
-├── LLM Service (Ollama + Fallback)
-├── Knowledge Base (Simple RAG)
+├── LLM Service (Ollama Llama 3.2 + Fallback)
+├── Knowledge Base (RAG Implementation)
 ├── Confidence Scoring
 └── Feedback Collection
 
@@ -30,12 +30,12 @@ Frontend (React + TypeScript + Tailwind)
 └── Knowledge Base Management
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.9+
 - Node.js 18+
-- (Optional) Ollama with Llama 3.2
+- Ollama with Llama 3.2 (recommended)
 
 ### Backend Setup
 
@@ -69,7 +69,7 @@ npm run dev
 
 Frontend runs at: http://localhost:5173
 
-### (Optional) Ollama Setup
+### Ollama Setup
 
 ```bash
 # Install Ollama from https://ollama.ai
@@ -77,19 +77,19 @@ Frontend runs at: http://localhost:5173
 # Start Ollama
 ollama serve
 
-# Pull model
+# Pull Llama 3.2 model
 ollama pull llama3.2
 ```
 
-**Note:** The system works without Ollama using intelligent fallback responses based on keyword matching and knowledge base articles.
+**Note:** The system works without Ollama using intelligent fallback responses based on keyword matching and knowledge base articles. However, for optimal performance, we recommend using Ollama with the Llama 3.2 model.
 
-## 📊 Key Features
+## Key Features
 
 ### 1. Human-in-the-Loop Workflows
 
 **Pre-Send Review (Primary Workflow):**
-- AI generates draft response with confidence score
-- Low confidence (<70%) → Auto-queue for agent review
+- AI generates draft response with confidence score using Ollama Llama 3.2
+- Low confidence (<65%) → Auto-queue for agent review
 - Agent can: Approve, Edit, or Escalate
 - Edits tracked as corrections for model improvement
 
@@ -100,9 +100,10 @@ ollama pull llama3.2
 
 ### 2. Confidence Scoring
 
-- **High (>80%)**: Green indicator, can auto-send
-- **Medium (50-80%)**: Yellow, queue for review
-- **Low (<50%)**: Red, requires intervention
+- **High (>=80%)**: High confidence, auto-sent to customer
+- **Good (65-79%)**: Good confidence, auto-sent to customer
+- **Medium (50-64%)**: Medium confidence, requires agent review
+- **Low (<50%)**: Low confidence, requires intervention
 
 Based on knowledge base match quality and keyword relevance.
 
@@ -120,60 +121,71 @@ Critical metrics for AI system evaluation:
 
 - CRUD interface for articles
 - Category-based organization
-- Simple keyword matching (production would use vector embeddings)
-- Powers AI context generation
+- Keyword-based retrieval (can be upgraded to vector embeddings)
+- Powers AI context generation via RAG
 
-## 🎬 Demo Flow
+### 5. LLM Integration
+
+- **Primary**: Ollama with Llama 3.2 model for local inference
+- **Fallback**: Intelligent rule-based responses when Ollama unavailable
+- **RAG**: Retrieval-Augmented Generation for context-aware responses
+- **Confidence Calibration**: Match-based scoring for quality assurance
+
+## Usage Guide
 
 1. **Customer Chat** (`/customer`):
    - Send a question (e.g., "What's your return policy?")
-   - Watch AI respond with confidence score
-   - Try low-confidence query to see queueing
+   - AI responds using Ollama Llama 3.2 with confidence score
+   - High confidence responses sent automatically
+   - Low confidence queries queued for agent review
 
 2. **Agent Dashboard** (`/agent`):
    - View conversation queue
-   - Review AI draft response
-   - See confidence indicator
-   - Edit response if needed
+   - Review AI draft responses
+   - See confidence indicators
+   - Edit responses if needed
    - Send and provide feedback
 
 3. **Analytics** (`/analytics`):
    - View key metrics
    - Review feedback history
-   - See deflection and resolution rates
+   - Monitor deflection and resolution rates
+   - Track model performance
 
 4. **Knowledge Base** (`/knowledge-base`):
-   - Browse seeded articles
-   - Add new article
-   - See how it improves AI responses
+   - Browse and manage articles
+   - Add new articles
+   - Update existing content
+   - See immediate impact on AI responses via RAG
 
-## 🎯 Interview Talking Points
+## Technical Architecture
 
 ### Product Strategy
 - **HITL Paradigm**: Balances automation efficiency with quality control
-- **Confidence Thresholds**: Business-configurable based on risk tolerance
+- **Confidence Thresholds**: Configurable via environment variables (default: 65%)
 - **Feedback Loops**: Critical for RLHF and continuous improvement
 - **Metrics Selection**: Focused on operational impact and AI quality
 
-### Technical Architecture
-- **Scalability**: Comment notes about async queues, vector DBs, caching
-- **Fallback Strategy**: Ensures demo reliability without Ollama
+### Technical Implementation
+- **Scalability**: Designed for async queues, vector DBs, and caching
+- **Fallback Strategy**: Ensures reliability when Ollama unavailable
 - **Type Safety**: TypeScript + Pydantic for contract enforcement
 - **Modular Design**: Easy to swap LLMs, databases, or add features
 
-### AI/ML Considerations
-- **Prompt Engineering**: System prompts with knowledge base context
-- **Confidence Calibration**: Match-based scoring (would use model logits in production)
-- **RAG Implementation**: Simple keyword search (would use embeddings + vector DB)
-- **Training Data Collection**: Structured feedback for fine-tuning
+### AI/ML Implementation
+- **LLM**: Ollama Llama 3.2 for local inference
+- **Prompt Engineering**: System prompts with knowledge base context injection
+- **Confidence Calibration**: Match-based scoring (can be upgraded to model logits)
+- **RAG Implementation**: Keyword-based retrieval (can be upgraded to embeddings + vector DB)
+- **Training Data Collection**: Structured feedback for future fine-tuning
 
-### Operational Insights
+### Operational Features
 - **Agent Experience**: Clear indicators, edit capabilities, minimal friction
-- **Customer Experience**: Fast responses for high-confidence, quality for low
+- **Customer Experience**: Fast responses for high-confidence, quality assurance for low
 - **Monitoring**: Real-time metrics for operational decision-making
 - **Iteration**: Feedback directly informs knowledge base improvements
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 mvp-chatbot/
@@ -190,7 +202,7 @@ mvp-chatbot/
 │   │   │   ├── knowledge_base.py
 │   │   │   └── analytics.py
 │   │   └── services/
-│   │       └── llm_service.py   # LLM integration
+│   │       └── llm_service.py   # Ollama LLM integration
 │   ├── seed_data.py             # Database seeding
 │   └── requirements.txt
 │
@@ -209,16 +221,17 @@ mvp-chatbot/
 └── README.md
 ```
 
-## 🔑 Key Differentiators
+## Key Differentiators
 
-1. ✅ **Dual HITL Workflows**: Both pre-send and post-send paradigms
-2. ✅ **Product Metrics**: Aligned with AI product management best practices
-3. ✅ **Confidence Scoring**: Data-driven intervention decisions
-4. ✅ **Feedback Architecture**: Structured collection for model improvement
-5. ✅ **Operational Focus**: Tools for agents, metrics for ops teams
-6. ✅ **Scalability Considerations**: Documented throughout codebase
+1. **Dual HITL Workflows**: Both pre-send and post-send paradigms
+2. **Product Metrics**: Aligned with AI product management best practices
+3. **Confidence Scoring**: Data-driven intervention decisions
+4. **Feedback Architecture**: Structured collection for model improvement
+5. **Operational Focus**: Tools for agents, metrics for ops teams
+6. **Ollama Integration**: Local LLM inference with Llama 3.2
+7. **Scalability Considerations**: Documented throughout codebase
 
-## 🚧 Production Considerations
+## Production Roadmap
 
 **To scale this to production:**
 
@@ -233,19 +246,17 @@ mvp-chatbot/
 9. **LLM Router**: Multiple model support with cost optimization
 10. **A/B Testing**: Experiment framework for model versions
 
-## 📝 License
+## Configuration
 
-Built for interview/portfolio purposes. Feel free to reference or adapt.
+### Environment Variables
 
-## 🎓 Learning Outcomes
+- `AUTO_SEND_THRESHOLD`: Confidence threshold for auto-sending responses (default: 0.65)
+- `OLLAMA_MODEL`: Ollama model name (default: "llama3.2")
+- `OLLAMA_BASE_URL`: Ollama API endpoint (default: "http://localhost:11434")
 
-This project demonstrates proficiency in:
-- Full-stack development (FastAPI + React)
-- AI/ML integration and prompt engineering
-- Product metrics design for AI systems
-- Human-in-the-Loop workflow design
-- System architecture and scalability planning
-- User experience for operational tools
+## License
+
+MIT License. Feel free to use, modify, and distribute.
 
 ---
 
