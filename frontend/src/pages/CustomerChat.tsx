@@ -1,11 +1,22 @@
 /**
  * Customer Chat Interface
- * Simple chat UI for customers to interact with AI support assistant.
+ * Modern chat UI for customers to interact with AI support assistant.
  * Includes conversation history to allow customers to return to previous chats.
  */
 import { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, History, Plus, MessageSquare } from 'lucide-react';
 import { createConversation, sendMessage, generateAIResponse, Message, getConversations, getConversationMessages } from '../services/api';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Separator } from '../components/ui/separator';
+import { Skeleton } from '../components/ui/skeleton';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '../components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { cn } from '../components/ui/utils';
 
 export default function CustomerChat() {
   const [customerId, setCustomerId] = useState<string>('');
@@ -141,186 +152,243 @@ export default function CustomerChat() {
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto p-4 h-[calc(100vh-4rem)]">
-      <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
-        {/* Header */}
-        <div className="bg-primary-600 text-white p-4 rounded-t-lg flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Customer Support Chat</h2>
-            <p className="text-sm text-primary-100">We're here to help!</p>
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="p-2 hover:bg-primary-700 rounded-lg transition-colors"
-              title="Conversation History"
-            >
-              <History className="h-5 w-5" />
-            </button>
-            <button
-              onClick={startNewConversation}
-              className="p-2 hover:bg-primary-700 rounded-lg transition-colors"
-              title="New Conversation"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'default';
+      case 'resolved':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  };
 
-        {/* Conversation History Sidebar */}
-        {showHistory && (
-          <div className="border-b p-4 bg-gray-50">
-            <h3 className="font-semibold text-gray-900 mb-3">Conversation History</h3>
-            {conversationHistory.length === 0 ? (
-              <p className="text-sm text-gray-500">No previous conversations</p>
-            ) : (
-              <div className="space-y-2">
-                {conversationHistory.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => loadConversation(conv.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                      conv.id === conversationId
-                        ? 'bg-primary-50 border-primary-300'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-900">
-                        <MessageSquare className="h-4 w-4 inline mr-1" />
-                        Conversation #{conv.id}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          conv.status === 'active'
-                            ? 'bg-blue-100 text-blue-800'
-                            : conv.status === 'resolved'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {conv.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-600 truncate">
-                      {conv.last_message || 'No messages yet'}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(conv.created_at).toLocaleDateString()} at{' '}
-                      {new Date(conv.created_at).toLocaleTimeString()}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
+  return (
+    <div className="max-w-5xl mx-auto h-[calc(100vh-8rem)]">
+      <Card className="h-full flex flex-col">
+        {/* Header */}
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Customer Support Chat</CardTitle>
+              <CardDescription>
+                We're here to help!
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Sheet open={showHistory} onOpenChange={setShowHistory}>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" title="Conversation History">
+                          <History className="h-5 w-5" />
+                        </Button>
+                      </SheetTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Conversation History</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <SheetContent side="left" className="w-[400px] sm:w-[540px]">
+                  <SheetHeader>
+                    <SheetTitle>Conversation History</SheetTitle>
+                    <SheetDescription>
+                      Select a conversation to view messages
+                    </SheetDescription>
+                  </SheetHeader>
+                  <Separator className="my-4" />
+                  <ScrollArea className="h-[calc(100vh-8rem)]">
+                    {conversationHistory.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No previous conversations</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 pr-4 min-w-0">
+                        {conversationHistory.map((conv) => (
+                          <Card
+                            key={conv.id}
+                            className={cn(
+                              "cursor-pointer transition-all hover:shadow-md max-w-full min-w-0",
+                              conv.id === conversationId && "ring-2 ring-primary"
+                            )}
+                            onClick={() => loadConversation(conv.id)}
+                          >
+                            <CardContent className="p-4 min-w-0">
+                              <div className="flex items-center justify-between mb-2 min-w-0">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
+                                  <span className="text-sm font-medium truncate">
+                                    Conversation #{conv.id}
+                                  </span>
+                                </div>
+                                <Badge variant={getStatusBadgeVariant(conv.status)} className="shrink-0">
+                                  {conv.status}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate mb-2 min-w-0">
+                                {conv.last_message || 'No messages yet'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(conv.created_at).toLocaleDateString()} at{' '}
+                                {new Date(conv.created_at).toLocaleTimeString()}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-primary-foreground hover:bg-primary-foreground/20"
+                      onClick={startNewConversation}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>New Conversation</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
-        )}
+        </CardHeader>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 && !showHistory && (
-            <div className="text-center text-gray-500 mt-8">
-              <Bot className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p>Start a conversation with our AI assistant</p>
-              <p className="text-sm mt-1">Ask about returns, shipping, products, or account help</p>
-              {conversationHistory.length > 0 && (
-                <button
-                  onClick={() => setShowHistory(true)}
-                  className="mt-4 text-primary-600 hover:text-primary-700 text-sm font-medium"
-                >
-                  <History className="h-4 w-4 inline mr-1" />
-                  View conversation history
-                </button>
+        <CardContent className="flex-1 p-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 space-y-4">
+              {messages.length === 0 && !showHistory && (
+                <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                  <div className="rounded-full bg-primary/10 p-6 mb-4">
+                    <Bot className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
+                  <p className="text-muted-foreground mb-4 max-w-md">
+                    Ask about returns, shipping, products, or account help
+                  </p>
+                  {conversationHistory.length > 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowHistory(true)}
+                      className="mt-2"
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View conversation history
+                    </Button>
+                  )}
+                </div>
               )}
+
+              {messages
+                .filter((message) => message.message_type !== 'ai_draft')
+                .map((message) => {
+                  const isCustomer = message.message_type === 'customer';
+                  return (
+                    <div
+                      key={message.id}
+                      className={cn(
+                        "flex gap-3",
+                        isCustomer ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      {!isCustomer && (
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-primary/10">
+                            <Bot className="h-4 w-4 text-primary" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div
+                        className={cn(
+                          "flex flex-col gap-1 max-w-[70%]",
+                          isCustomer && "items-end"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "rounded-lg px-4 py-2 shadow-sm",
+                            isCustomer
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                          )}
+                        >
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {message.content}
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground px-1">
+                          {new Date(message.created_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                      {isCustomer && (
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-primary">
+                            <User className="h-4 w-4 text-primary-foreground" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  );
+                })}
+
+              {isLoading && (
+                <div className="flex gap-3 justify-start">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10">
+                      <Bot className="h-4 w-4 text-primary" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-1 max-w-[70%]">
+                    <div className="rounded-lg px-4 py-2 bg-muted shadow-sm">
+                      <div className="flex gap-1">
+                        <Skeleton className="h-2 w-2 rounded-full" />
+                        <Skeleton className="h-2 w-2 rounded-full" style={{ animationDelay: '0.1s' }} />
+                        <Skeleton className="h-2 w-2 rounded-full" style={{ animationDelay: '0.2s' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          )}
+          </ScrollArea>
+        </CardContent>
 
-          {messages
-            .filter((message) => message.message_type !== 'ai_draft') // Filter out drafts - customers should never see them
-            .map((message) => {
-            const isCustomer = message.message_type === 'customer';
-            return (
-              <div
-                key={message.id}
-                className={`flex ${isCustomer ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`flex max-w-[70%] ${
-                    isCustomer ? 'flex-row-reverse' : 'flex-row'
-                  }`}
-                >
-                  <div
-                    className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${
-                      isCustomer ? 'bg-primary-600 ml-2' : 'bg-gray-300 mr-2'
-                    }`}
-                  >
-                    {isCustomer ? (
-                      <User className="h-5 w-5 text-white" />
-                    ) : (
-                      <Bot className="h-5 w-5 text-gray-600" />
-                    )}
-                  </div>
-                  <div
-                    className={`rounded-lg p-3 ${
-                      isCustomer
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {new Date(message.created_at).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="flex max-w-[70%]">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-300 mr-2 flex items-center justify-center">
-                  <Bot className="h-5 w-5 text-gray-600" />
-                </div>
-                <div className="bg-gray-100 rounded-lg p-3">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
+        <Separator />
 
         {/* Input */}
-        <div className="border-t p-4">
-          <div className="flex space-x-2">
-            <input
-              type="text"
+        <CardContent className="p-4">
+          <div className="flex gap-2">
+            <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
               disabled={isLoading}
+              className="flex-1"
             />
-            <button
+            <Button
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim()}
-              className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
+              size="icon"
             >
-              <Send className="h-5 w-5" />
-            </button>
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-

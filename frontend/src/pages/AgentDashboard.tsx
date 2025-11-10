@@ -1,10 +1,10 @@
 /**
  * Agent Supervision Dashboard
- * Human-in-the-Loop interface for agents to review, edit, and approve AI responses.
+ * Modern Human-in-the-Loop interface for agents to review, edit, and approve AI responses.
  * Demonstrates both pre-send and post-send HITL workflows.
  */
 import { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, XCircle, Edit2, Send, AlertTriangle } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Edit2, Send, AlertTriangle, ThumbsDown, ThumbsUp } from 'lucide-react';
 import {
   getConversations,
   getConversationMessages,
@@ -16,6 +16,17 @@ import {
   Conversation,
   Message,
 } from '../services/api';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Textarea } from '../components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Separator } from '../components/ui/separator';
+import { Label } from '../components/ui/label';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
+import { cn } from '../components/ui/utils';
 
 export default function AgentDashboard() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -193,31 +204,31 @@ export default function AgentDashboard() {
     // Auto-send threshold is 65% - responses >= 65% are sent automatically
     if (confidence >= 0.8) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <Badge className="bg-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
           High Confidence ({(confidence * 100).toFixed(0)}%) - Auto-sent
-        </span>
+        </Badge>
       );
     } else if (confidence >= 0.65) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <Badge>
           <CheckCircle className="h-3 w-3 mr-1" />
           Good Confidence ({(confidence * 100).toFixed(0)}%) - Auto-sent
-        </span>
+        </Badge>
       );
     } else if (confidence >= 0.5) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        <Badge className="bg-yellow-500">
           <AlertTriangle className="h-3 w-3 mr-1" />
           Medium Confidence ({(confidence * 100).toFixed(0)}%) - Needs Review
-        </span>
+        </Badge>
       );
     } else {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <Badge className="bg-destructive">
           <XCircle className="h-3 w-3 mr-1" />
           Low Confidence ({(confidence * 100).toFixed(0)}%) - Needs Review
-        </span>
+        </Badge>
       );
     }
   };
@@ -225,253 +236,312 @@ export default function AgentDashboard() {
   const selectedConversation = conversations.find(c => c.id === selectedConvId);
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex">
+    <div className="h-[calc(100vh-8rem)] flex gap-4">
       {/* Conversation Queue */}
-      <div className="w-80 bg-white border-r overflow-y-auto">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Conversations</h2>
-        </div>
-        <div className="divide-y">
-          {conversations.map((conv) => (
-            <div
-              key={conv.id}
-              onClick={() => setSelectedConvId(conv.id)}
-              className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                selectedConvId === conv.id ? 'bg-primary-50 border-l-4 border-primary-600' : ''
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-sm">#{conv.id}</span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    conv.status === 'active'
-                      ? 'bg-blue-100 text-blue-800'
-                      : conv.status === 'resolved'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
+      <Card className="w-80 flex flex-col overflow-hidden min-w-0">
+        <CardHeader className="pb-3">
+          <CardTitle>Conversations</CardTitle>
+          <CardDescription>
+            {conversations.length} total conversations
+          </CardDescription>
+        </CardHeader>
+        <Separator />
+        <ScrollArea className="flex-1 min-w-0">
+          <div className="p-3 space-y-2 min-w-0">
+            {conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => setSelectedConvId(conv.id)}
+                className={cn(
+                  "w-full max-w-full text-left p-3 rounded-lg border transition-all min-w-0",
+                  "hover:bg-accent hover:border-primary/50",
+                  "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                  selectedConvId === conv.id
+                    ? "bg-primary/5 border-primary shadow-sm ring-1 ring-primary/20"
+                    : "bg-card border-border"
+                )}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2 min-w-0">
+                  <span className="font-semibold text-sm text-foreground shrink-0">#{conv.id}</span>
+                  <Badge 
+                    variant={conv.status === 'active' ? 'default' : conv.status === 'resolved' ? 'secondary' : 'destructive'}
+                    className="text-xs shrink-0"
+                  >
+                    {conv.status}
+                  </Badge>
+                </div>
+                <p 
+                  className="text-xs text-muted-foreground mb-2 leading-relaxed overflow-hidden min-w-0"
+                  style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    wordBreak: 'break-word'
+                  }}
                 >
-                  {conv.status}
-                </span>
-              </div>
-              <p className="text-xs text-gray-600 truncate">{conv.last_message || 'No messages'}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(conv.updated_at).toLocaleTimeString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+                  {conv.last_message || 'No messages'}
+                </p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>{new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      </Card>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <Card className="flex-1 flex flex-col">
         {selectedConvId ? (
           <>
             {/* Header */}
-            <div className="bg-white border-b p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">
-                    Conversation #{selectedConvId}
-                  </h3>
-                  <p className="text-sm text-gray-600">
+            <CardHeader>
+              <div className="flex items-center justify-between min-w-0">
+                <div className="min-w-0 flex-1">
+                  <CardTitle>Conversation #{selectedConvId}</CardTitle>
+                  <CardDescription>
                     Customer: {selectedConversation?.customer_id}
-                  </p>
+                  </CardDescription>
                 </div>
-                <div className="flex space-x-2">
-                  <button
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleEscalate}
-                    className="px-4 py-2 text-sm border border-red-500 text-red-600 rounded-lg hover:bg-red-50"
+                    className="border-red-500 text-red-600 hover:bg-red-50"
                   >
-                    <AlertCircle className="h-4 w-4 inline mr-1" />
+                    <AlertCircle className="h-4 w-4 mr-2" />
                     Escalate
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="sm"
                     onClick={handleResolve}
-                    className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700"
                   >
-                    <CheckCircle className="h-4 w-4 inline mr-1" />
+                    <CheckCircle className="h-4 w-4 mr-2" />
                     Resolve
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </div>
+            </CardHeader>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              {messages.filter(m => m.message_type !== 'ai_draft').map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`mb-4 ${
-                    msg.message_type === 'customer' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  <div
-                    className={`inline-block max-w-[70%] rounded-lg p-3 ${
-                      msg.message_type === 'customer'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-white text-gray-900'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs opacity-70">
-                        {new Date(msg.created_at).toLocaleTimeString()}
-                      </p>
-                      {msg.confidence_score !== undefined && msg.confidence_score !== null && (
-                        <span className="text-xs ml-2">
-                          {msg.message_type === 'agent_edited' ? '✏️ Edited' : ''}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+            <CardContent className="flex-1 p-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-6 space-y-4">
+                  {messages.filter(m => m.message_type !== 'ai_draft').map((msg) => {
+                    const isCustomer = msg.message_type === 'customer';
+                    return (
+                      <div
+                        key={msg.id}
+                        className={cn(
+                          "flex gap-3",
+                          isCustomer ? "justify-end" : "justify-start"
+                        )}
+                      >
+                        {!isCustomer && (
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-muted">
+                              AI
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div
+                          className={cn(
+                            "flex flex-col gap-1 max-w-[70%]",
+                            isCustomer && "items-end"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "rounded-lg px-4 py-2 shadow-sm",
+                              isCustomer
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            )}
+                          >
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {msg.content}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 px-1">
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(msg.created_at).toLocaleTimeString()}
+                            </p>
+                            {msg.confidence_score !== undefined && msg.confidence_score !== null && (
+                              <span className="text-xs text-muted-foreground">
+                                {msg.message_type === 'agent_edited' ? '✏️ Edited' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {isCustomer && (
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-primary">
+                              C
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </ScrollArea>
+            </CardContent>
 
             {/* AI Draft Review Section */}
             {aiDraft && (
-              <div className="border-t bg-white p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <h4 className="font-semibold">AI Draft Response</h4>
-                  {getConfidenceBadge(aiConfidence)}
-                </div>
-
-                {!isEditMode ? (
-                  <div className="bg-gray-50 p-3 rounded-lg mb-3">
-                    <p className="text-sm whitespace-pre-wrap">{editedResponse}</p>
+              <>
+                <Separator />
+                <CardContent className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">AI Draft Response</CardTitle>
+                    {getConfidenceBadge(aiConfidence)}
                   </div>
-                ) : (
-                  <textarea
-                    value={editedResponse}
-                    onChange={(e) => setEditedResponse(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-3 text-sm mb-3 focus:ring-2 focus:ring-primary-500 focus:outline-none"
-                    rows={4}
-                  />
-                )}
 
-                <div className="flex space-x-2">
                   {!isEditMode ? (
-                    <>
-                      <button
-                        onClick={() => handleSendResponse(false)}
-                        className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center justify-center"
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        Send as-is
-                      </button>
-                      <button
-                        onClick={() => setIsEditMode(true)}
-                        className="flex-1 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 flex items-center justify-center"
-                      >
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Edit & Send
-                      </button>
-                    </>
+                    <Alert>
+                      <AlertDescription className="whitespace-pre-wrap">
+                        {editedResponse}
+                      </AlertDescription>
+                    </Alert>
                   ) : (
-                    <>
-                      <button
-                        onClick={() => handleSendResponse(true)}
-                        className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
-                      >
-                        Send Edited Response
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsEditMode(false);
-                          setEditedResponse(aiDraft);
-                        }}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                    </>
+                    <Textarea
+                      value={editedResponse}
+                      onChange={(e) => setEditedResponse(e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
                   )}
-                </div>
-              </div>
+
+                  <div className="flex gap-2">
+                    {!isEditMode ? (
+                      <>
+                        <Button
+                          onClick={() => handleSendResponse(false)}
+                          className="flex-1"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Send as-is
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsEditMode(true)}
+                          className="flex-1"
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit & Send
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={() => handleSendResponse(true)}
+                          className="flex-1"
+                        >
+                          Send Edited Response
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsEditMode(false);
+                            setEditedResponse(aiDraft);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </>
             )}
 
-            {/* Feedback Modal */}
-            {showFeedback && (
-              <div className="border-t bg-yellow-50 p-4">
-                <h4 className="font-semibold mb-3">Provide Feedback on AI Response</h4>
-                <div className="space-y-3">
+            {/* Feedback Dialog */}
+            <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Provide Feedback on AI Response</DialogTitle>
+                  <DialogDescription>
+                    Your feedback helps improve the AI model
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Rating</label>
-                    <div className="flex space-x-2">
-                      <button
+                    <Label>Rating</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        variant={feedbackRating === 'helpful' ? 'default' : 'outline'}
                         onClick={() => setFeedbackRating('helpful')}
-                        className={`px-4 py-2 rounded-lg ${
-                          feedbackRating === 'helpful'
-                            ? 'bg-green-600 text-white'
-                            : 'border border-gray-300 hover:bg-gray-50'
-                        }`}
+                        className={cn(
+                          feedbackRating === 'helpful' && 'bg-green-600 hover:bg-green-700'
+                        )}
                       >
-                        👍 Helpful
-                      </button>
-                      <button
+                        <ThumbsUp className="h-4 w-4 mr-2" />
+                        Helpful
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={() => setFeedbackRating('not_helpful')}
-                        className={`px-4 py-2 rounded-lg ${
-                          feedbackRating === 'not_helpful'
-                            ? 'bg-red-600 text-white'
-                            : 'border border-gray-300 hover:bg-gray-50'
-                        }`}
+                        className={cn(
+                          feedbackRating === 'not_helpful' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                        )}
                       >
-                        👎 Not Helpful
-                      </button>
-                      <button
+                        <ThumbsDown className="h-4 w-4 mr-2" />
+                        Not Helpful
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={() => setFeedbackRating('needs_improvement')}
-                        className={`px-4 py-2 rounded-lg ${
-                          feedbackRating === 'needs_improvement'
-                            ? 'bg-yellow-600 text-white'
-                            : 'border border-gray-300 hover:bg-gray-50'
-                        }`}
+                        className={cn(
+                          feedbackRating === 'needs_improvement' && 'bg-yellow-500 hover:bg-yellow-600'
+                        )}
                       >
-                        ⚠️ Needs Improvement
-                      </button>
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Needs Improvement
+                      </Button>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Additional Notes (optional)
-                    </label>
-                    <textarea
+                    <Label htmlFor="notes">Additional Notes (optional)</Label>
+                    <Textarea
+                      id="notes"
                       value={feedbackNotes}
                       onChange={(e) => setFeedbackNotes(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
                       rows={3}
                       placeholder="What could be improved?"
+                      className="mt-2"
                     />
                   </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleSubmitFeedback}
-                      disabled={!feedbackRating}
-                      className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      Submit Feedback
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowFeedback(false);
-                        handleResolve();
-                      }}
-                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                      Skip
-                    </button>
-                  </div>
                 </div>
-              </div>
-            )}
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowFeedback(false);
+                      handleResolve();
+                    }}
+                  >
+                    Skip
+                  </Button>
+                  <Button
+                    onClick={handleSubmitFeedback}
+                    disabled={!feedbackRating}
+                  >
+                    Submit Feedback
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
-            <p>Select a conversation to view</p>
-          </div>
+          <CardContent className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-2">
+              <p className="text-muted-foreground">Select a conversation to view</p>
+            </div>
+          </CardContent>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
-

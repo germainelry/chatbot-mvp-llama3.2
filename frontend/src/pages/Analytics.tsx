@@ -1,11 +1,19 @@
 /**
  * Analytics Dashboard
- * Key product metrics for AI customer support system.
+ * Modern analytics dashboard with key product metrics for AI customer support system.
  * Shows deflection rate, resolution rate, confidence scores, and feedback sentiment.
  */
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Activity, MessageSquare, CheckCircle, AlertTriangle, ThumbsUp, BarChart2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, MessageSquare, CheckCircle, AlertTriangle, ThumbsUp, BarChart2, Loader2, Info } from 'lucide-react';
 import { getMetrics, getFeedbackHistory, Metrics, FeedbackHistory } from '../services/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Skeleton } from '../components/ui/skeleton';
+import { Separator } from '../components/ui/separator';
+import { PageHeader } from '../components/layout/PageHeader';
+import { cn } from '../components/ui/utils';
 
 export default function Analytics() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -35,10 +43,10 @@ export default function Analytics() {
 
   if (loading || !metrics) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="text-center">
-          <Activity className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading analytics...</p>
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading analytics...</p>
         </div>
       </div>
     );
@@ -48,231 +56,209 @@ export default function Analytics() {
     title,
     value,
     icon: Icon,
-    color,
+    iconBg,
     subtitle,
-    trend,
   }: {
     title: string;
     value: string | number;
     icon: any;
-    color: string;
+    iconBg: string;
     subtitle?: string;
-    trend?: 'up' | 'down';
   }) => (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        <div className={cn("p-1.5 rounded-md", iconBg)}>
+          <Icon className="h-4 w-4 text-white" />
         </div>
-        {trend && (
-          <div className={`flex items-center ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-            {trend === 'up' ? (
-              <TrendingUp className="h-4 w-4" />
-            ) : (
-              <TrendingDown className="h-4 w-4" />
-            )}
-          </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         )}
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 
-  // Calculate deflection rate (inverse of escalation rate)
-  const deflectionRate = 100 - metrics.escalation_rate;
+  const getRatingBadgeVariant = (rating: string) => {
+    switch (rating) {
+      case 'helpful':
+        return 'default';
+      case 'not_helpful':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Key metrics for AI customer support performance
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Analytics Dashboard"
+        description="Monitor your AI support system performance"
+      />
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Key Metrics Grid - 6 cards in top row */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <MetricCard
           title="Total Conversations"
           value={metrics.total_conversations}
           icon={MessageSquare}
-          color="bg-primary-600"
-          subtitle={`${metrics.active_conversations} active now`}
+          iconBg="bg-sky-500"
+          subtitle="All time"
+        />
+        
+        <MetricCard
+          title="Active Conversations"
+          value={metrics.active_conversations}
+          icon={TrendingUp}
+          iconBg="bg-blue-500"
+          subtitle="Currently active"
         />
         
         <MetricCard
           title="Resolution Rate"
           value={`${metrics.resolution_rate}%`}
           icon={CheckCircle}
-          color="bg-green-600"
-          subtitle="Conversations resolved"
-          trend="up"
+          iconBg="bg-green-500"
+          subtitle={`${Math.round(metrics.total_conversations * metrics.resolution_rate / 100)} resolved`}
         />
         
         <MetricCard
-          title="Deflection Rate"
-          value={`${deflectionRate.toFixed(1)}%`}
-          icon={Activity}
-          color="bg-blue-600"
-          subtitle="AI handled without escalation"
-          trend="up"
+          title="Escalation Rate"
+          value={`${metrics.escalation_rate}%`}
+          icon={AlertTriangle}
+          iconBg="bg-red-500"
+          subtitle={`${Math.round(metrics.total_conversations * metrics.escalation_rate / 100)} escalated`}
         />
         
         <MetricCard
           title="Avg Confidence Score"
           value={`${(metrics.avg_confidence_score * 100).toFixed(0)}%`}
           icon={BarChart2}
-          color="bg-purple-600"
+          iconBg="bg-purple-500"
           subtitle="AI response confidence"
-        />
-      </div>
-
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <MetricCard
-          title="Escalation Rate"
-          value={`${metrics.escalation_rate}%`}
-          icon={AlertTriangle}
-          color="bg-red-600"
-          subtitle="Requiring human intervention"
-          trend="down"
         />
         
         <MetricCard
           title="Feedback Sentiment"
           value={`${metrics.feedback_sentiment}%`}
           icon={ThumbsUp}
-          color="bg-green-600"
-          subtitle={`${metrics.helpful_feedback}/${metrics.total_feedback} helpful`}
-          trend="up"
-        />
-        
-        <MetricCard
-          title="Agent Feedback"
-          value={metrics.total_feedback}
-          icon={MessageSquare}
-          color="bg-indigo-600"
-          subtitle="Total feedback collected"
+          iconBg="bg-green-500"
+          subtitle={`${metrics.helpful_feedback} of ${metrics.total_feedback} helpful`}
         />
       </div>
 
       {/* Key Insights */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Key Insights</h2>
-        <div className="space-y-3">
-          <div className="flex items-start p-3 bg-green-50 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-green-900">Strong AI Performance</p>
-              <p className="text-sm text-green-700">
-                {deflectionRate.toFixed(1)}% of conversations handled without escalation demonstrates effective AI assistance
-              </p>
-            </div>
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Key Insights</CardTitle>
+          <CardDescription>
+            Automated analysis of your support metrics
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Alert>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle>Strong AI Performance</AlertTitle>
+            <AlertDescription>
+              {(100 - metrics.escalation_rate).toFixed(1)}% of conversations handled without escalation demonstrates effective AI assistance
+            </AlertDescription>
+          </Alert>
           
           {metrics.avg_confidence_score < 0.7 && (
-            <div className="flex items-start p-3 bg-yellow-50 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-yellow-900">Confidence Score Opportunity</p>
-                <p className="text-sm text-yellow-700">
-                  Average confidence is {(metrics.avg_confidence_score * 100).toFixed(0)}%. Consider expanding knowledge base for better accuracy.
-                </p>
-              </div>
-            </div>
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Confidence Score Opportunity</AlertTitle>
+              <AlertDescription>
+                Average confidence is {(metrics.avg_confidence_score * 100).toFixed(0)}%. Consider expanding knowledge base for better accuracy.
+              </AlertDescription>
+            </Alert>
           )}
           
-          <div className="flex items-start p-3 bg-blue-50 rounded-lg">
-            <ThumbsUp className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-blue-900">Agent Feedback Collection</p>
-              <p className="text-sm text-blue-700">
-                {metrics.feedback_sentiment}% positive feedback rate - valuable data for model improvement
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+          <Alert>
+            <ThumbsUp className="h-4 w-4 text-blue-600" />
+            <AlertTitle>Agent Feedback Collection</AlertTitle>
+            <AlertDescription>
+              {metrics.feedback_sentiment}% positive feedback rate - valuable data for model improvement
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
 
       {/* Recent Feedback */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold">Recent Agent Feedback</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Conversation
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rating
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Agent Notes
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Timestamp
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Agent Feedback</CardTitle>
+          <CardDescription>
+            Latest feedback from support agents
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Conversation</TableHead>
+                <TableHead>Rating</TableHead>
+                <TableHead>Agent Notes</TableHead>
+                <TableHead>Timestamp</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {feedbackHistory.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                     No feedback collected yet
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 feedbackHistory.map((feedback) => (
-                  <tr key={feedback.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <TableRow key={feedback.id}>
+                    <TableCell className="font-medium">
                       #{feedback.conversation_id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          feedback.rating === 'helpful'
-                            ? 'bg-green-100 text-green-800'
-                            : feedback.rating === 'not_helpful'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRatingBadgeVariant(feedback.rating)}>
                         {feedback.rating.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
-                      {feedback.notes || feedback.agent_correction || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-md">
+                      <p className="truncate">
+                        {feedback.notes || feedback.agent_correction || '-'}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
                       {new Date(feedback.created_at).toLocaleString()}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Interview Talking Points */}
-      <div className="mt-8 bg-gradient-to-r from-primary-50 to-purple-50 rounded-lg p-6 border border-primary-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">📊 Product Metrics Design Rationale</h3>
-        <div className="space-y-2 text-sm text-gray-700">
-          <p><strong>Deflection Rate:</strong> Key indicator of AI effectiveness - shows % of issues resolved without human escalation</p>
-          <p><strong>Resolution Rate:</strong> Measures customer satisfaction and conversation closure success</p>
-          <p><strong>Confidence Score:</strong> Enables data-driven HITL decisions - low scores trigger agent review</p>
-          <p><strong>Feedback Sentiment:</strong> Critical for RLHF - tracks agent satisfaction for model improvement</p>
-          <p><strong>Escalation Rate:</strong> Inverse metric to deflection - highlights when AI needs support</p>
-        </div>
-      </div>
+      <Card className="bg-gradient-to-r from-primary/5 to-purple-500/5 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart2 className="h-5 w-5" />
+            Product Metrics Design Rationale
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <p><strong>Deflection Rate:</strong> Key indicator of AI effectiveness - shows % of issues resolved without human escalation</p>
+            <p><strong>Resolution Rate:</strong> Measures customer satisfaction and conversation closure success</p>
+            <p><strong>Confidence Score:</strong> Enables data-driven HITL decisions - low scores trigger agent review</p>
+            <p><strong>Feedback Sentiment:</strong> Critical for RLHF - tracks agent satisfaction for model improvement</p>
+            <p><strong>Escalation Rate:</strong> Inverse metric to deflection - highlights when AI needs support</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
