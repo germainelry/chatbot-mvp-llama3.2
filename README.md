@@ -4,7 +4,7 @@ A full-stack AI-powered customer support system with **Human-in-the-Loop (HITL)*
 
 ## 🎯 Project Goals
 
-Built as a portfolio piece for **Product Manager – AI Agent & Chatbot Intelligence** role, this MVP demonstrates:
+Built to develop foundational skills and knowledge in AI chatbots and agentic systems, this MVP demonstrates:
 
 - ✅ Agentic AI systems with LLM integration
 - ✅ Human-in-the-Loop workflows (pre-send & post-send)
