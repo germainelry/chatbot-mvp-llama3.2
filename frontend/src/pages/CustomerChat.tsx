@@ -191,7 +191,7 @@ export default function CustomerChat() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <SheetContent side="left" className="w-[400px] sm:w-[540px]">
+                <SheetContent side="left" className="w-full sm:w-[540px] max-w-[540px]">
                   <SheetHeader>
                     <SheetTitle>Conversation History</SheetTitle>
                     <SheetDescription>
@@ -206,21 +206,21 @@ export default function CustomerChat() {
                         <p>No previous conversations</p>
                       </div>
                     ) : (
-                      <div className="space-y-2 pr-4 min-w-0">
+                      <div className="space-y-2 pr-4">
                         {conversationHistory.map((conv) => (
                           <Card
                             key={conv.id}
                             className={cn(
-                              "cursor-pointer transition-all hover:shadow-md max-w-full min-w-0",
+                              "cursor-pointer transition-all hover:shadow-md w-full",
                               conv.id === conversationId && "ring-2 ring-primary"
                             )}
                             onClick={() => loadConversation(conv.id)}
                           >
-                            <CardContent className="p-4 min-w-0">
-                              <div className="flex items-center justify-between mb-2 min-w-0">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between mb-2 gap-2">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
                                   <MessageSquare className="h-4 w-4 text-muted-foreground shrink-0" />
-                                  <span className="text-sm font-medium truncate">
+                                  <span className="text-sm font-medium">
                                     Conversation #{conv.id}
                                   </span>
                                 </div>
@@ -228,7 +228,16 @@ export default function CustomerChat() {
                                   {conv.status}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-muted-foreground truncate mb-2 min-w-0">
+                              <p 
+                                className="text-xs text-muted-foreground mb-2 break-words"
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 3,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  wordBreak: 'break-word'
+                                }}
+                              >
                                 {conv.last_message || 'No messages yet'}
                               </p>
                               <p className="text-xs text-muted-foreground">
