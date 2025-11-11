@@ -225,18 +225,28 @@ mvp-chatbot/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app
 │   │   ├── database.py          # SQLAlchemy setup
-│   │   ├── models.py            # Database models
+│   │   ├── models.py            # Database models (V2: includes TrainingData, EvaluationMetrics, etc.)
 │   │   ├── routers/             # API endpoints
 │   │   │   ├── conversations.py
 │   │   │   ├── messages.py
-│   │   │   ├── ai.py
-│   │   │   ├── feedback.py
+│   │   │   ├── ai.py            # Multi-agent orchestration endpoint
+│   │   │   ├── feedback.py      # Feedback + retraining endpoints
 │   │   │   ├── knowledge_base.py
-│   │   │   └── analytics.py
-│   │   └── services/
-│   │       └── llm_service.py   # Ollama LLM integration
+│   │   │   ├── analytics.py     # Metrics + evaluation endpoints
+│   │   │   └── experiments.py   # A/B testing endpoints (V2)
+│   │   └── services/            # Core business logic
+│   │       ├── llm_service.py   # Ollama LLM integration
+│   │       ├── rag_service.py   # Vector RAG with ChromaDB (V2)
+│   │       ├── router_agent.py  # Intent classification (V2)
+│   │       ├── knowledge_agent.py # FAQ/order handling (V2)
+│   │       ├── escalation_agent.py # Human handoff (V2)
+│   │       ├── agent_orchestrator.py # Multi-agent coordination (V2)
+│   │       ├── evaluation_service.py # BLEU, semantic similarity (V2)
+│   │       ├── retraining_service.py # Feedback processing (V2)
+│   │       ├── data_logging_service.py # Agent action tracking (V2)
+│   │       └── experiment_service.py # A/B testing (V2)
 │   ├── seed_data.py             # Database seeding
-│   └── requirements.txt
+│   └── requirements.txt         # V2: includes sentence-transformers, chromadb
 │
 ├── frontend/
 │   ├── src/
@@ -250,7 +260,13 @@ mvp-chatbot/
 │   │       └── api.ts           # API client
 │   └── package.json
 │
-└── README.md
+├── README.md                    # Project overview
+├── QUICK_START.md               # Setup guide
+├── V2_ARCHITECTURE.md           # System architecture (V2)
+├── V2_DEMO_SCRIPT.md            # Demo walkthrough (V2)
+├── V2_TECHNICAL_FLOW.md         # Technical flow details (V2)
+└── backend/
+    └── LLM_TRAINING_GUIDE.md    # Training concepts (V2)
 ```
 
 ## Key Differentiators

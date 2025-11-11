@@ -94,12 +94,7 @@ logs/
 *.log
 
 # Markdown files
-QUICK_START.md
-DEMO_SCRIPT.md
 INTERVIEW*.md
-PROJECT_SUMMARY.md
-BACKEND_TECHNICAL_GUIDE.md
-LLM_TRAINING_GUIDE.md
 
 
 # Cursor files
