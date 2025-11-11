@@ -1,11 +1,23 @@
-# AI Customer Support Assistant MVP
+# AI Customer Support Assistant - V2 Multi-Agent Platform
 
-A full-stack AI-powered customer support system with **Human-in-the-Loop (HITL)** capabilities, powered by Ollama's Llama 3.2 LLM model. This MVP demonstrates modern agentic AI systems, prompt engineering, and product metrics for AI applications.
+A full-stack AI-powered customer support system with **Human-in-the-Loop (HITL)** capabilities, powered by Ollama's Llama 3.2 LLM model. **V2** extends the MVP with multi-agent orchestration, vector RAG, self-improving feedback loops, and A/B testing.
+
+## 🚀 V2 Features
+
+- **Vector RAG** - Semantic search using sentence-transformers and ChromaDB
+- **Multi-Agent Orchestration** - Router, Knowledge, and Escalation agents
+- **Evaluation Metrics** - BLEU scores, semantic similarity, CSAT tracking
+- **Self-Improving Feedback Loops** - Automatic retraining from agent corrections
+- **A/B Testing Framework** - Model version comparison and experimentation
+- **Enhanced HITL Dashboard** - Correction tracking, agent performance metrics
+
+See [V2_ARCHITECTURE.md](./V2_ARCHITECTURE.md) for detailed architecture, [V2_DEMO_SCRIPT.md](./V2_DEMO_SCRIPT.md) for demo walkthrough, and [V2_TECHNICAL_FLOW.md](./V2_TECHNICAL_FLOW.md) for technical flow documentation.
 
 ## Project Goals
 
-This MVP provides:
+This platform provides:
 
+### Core Features (MVP + V2)
 - Agentic AI systems with LLM integration using Ollama Llama 3.2
 - Human-in-the-Loop workflows (pre-send & post-send)
 - Product metrics for AI systems (deflection rate, resolution rate, feedback sentiment)
@@ -14,28 +26,48 @@ This MVP provides:
 - Agent supervision dashboard
 - Real-time analytics
 
+### V2 Enhancements
+- **Vector Embeddings** - Semantic search with sentence-transformers
+- **Multi-Agent System** - Specialized agents (Router, Knowledge, Escalation)
+- **Intent Classification** - Few-shot learning with embeddings
+- **Evaluation Framework** - BLEU, semantic similarity, CSAT metrics
+- **Auto-Retraining** - Feedback → Training Data → Model Updates
+- **A/B Testing** - Model version comparison and experimentation
+- **Data Logging** - Comprehensive agent action tracking
+
 ## Architecture
 
+### V2 Multi-Agent Architecture
+
 ```
-Backend (FastAPI + SQLite)
-├── LLM Service (Ollama Llama 3.2 + Fallback)
-├── Knowledge Base (RAG Implementation)
-├── Confidence Scoring
-└── Feedback Collection
+Backend (FastAPI + SQLite + ChromaDB)
+├── Multi-Agent Orchestration
+│   ├── Router Agent (Intent Classification)
+│   ├── Knowledge Agent (FAQ/Orders)
+│   └── Escalation Agent (Handoff Management)
+├── Vector RAG Service (sentence-transformers + ChromaDB)
+├── Evaluation Service (BLEU, Semantic Similarity, CSAT)
+├── Retraining Service (Feedback → Model Updates)
+├── Experiment Service (A/B Testing)
+└── Data Logging Service (Agent Actions)
 
 Frontend (React + TypeScript + Tailwind)
 ├── Customer Chat Interface
-├── Agent Supervision Dashboard
-├── Analytics Dashboard
-└── Knowledge Base Management
+├── Agent Supervision Dashboard (Enhanced)
+├── Analytics Dashboard (Evaluation Metrics)
+├── Knowledge Base Management
+└── Experiments Dashboard (A/B Testing)
 ```
+
+See [V2_ARCHITECTURE.md](./V2_ARCHITECTURE.md) for detailed architecture documentation.
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.9+
 - Node.js 18+
-- Ollama with Llama 3.2 (recommended)
+- Ollama with Llama 3.2 (recommended, optional)
+- sentence-transformers, chromadb, nltk (auto-installed via requirements.txt)
 
 ### Backend Setup
 
