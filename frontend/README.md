@@ -71,7 +71,7 @@ Frontend will run at: http://localhost:5173
 - Responsive design
 - Loading states and error handling
 
-## Interview Talking Points
+## Key Discussion Points
 
 **Product Thinking:**
 - HITL workflow balances automation vs quality

@@ -61,7 +61,7 @@ API docs available at: http://localhost:8000/docs
 4. Agent can approve, edit, or escalate
 5. Feedback collected for model improvement
 
-## Key Features for Interview Discussion
+## Key Features
 
 - **Confidence Scoring**: Based on knowledge base match quality
 - **Dual Workflow Support**: Pre-send review and post-send feedback
