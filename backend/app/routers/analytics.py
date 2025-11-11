@@ -3,7 +3,7 @@ Analytics endpoints for dashboard metrics.
 Tracks key product metrics for AI system performance.
 """
 from datetime import date, datetime, timedelta
-from typing import List
+from typing import List, Optional, Dict
 
 from app.database import get_db
 from app.models import (
@@ -13,7 +13,10 @@ from app.models import (
     FeedbackRating,
     Message,
     MessageType,
+    EvaluationMetrics,
 )
+from app.services.evaluation_service import aggregate_evaluation_metrics
+from app.services.data_logging_service import get_agent_performance_metrics
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import Date, Integer, case, cast, func
@@ -263,4 +266,44 @@ async def get_time_series_metrics(
         ))
     
     return TimeSeriesResponse(metrics=metrics)
+
+
+class EvaluationMetricsResponse(BaseModel):
+    avg_bleu_score: Optional[float]
+    avg_semantic_similarity: Optional[float]
+    avg_csat: Optional[float]
+    deflection_rate: float
+    total_evaluations: int
+    total_csat_responses: int
+
+
+@router.get("/evaluation", response_model=EvaluationMetricsResponse)
+async def get_evaluation_metrics(
+    days: int = 30,
+    db: Session = Depends(get_db)
+):
+    """
+    Get evaluation metrics including BLEU scores, semantic similarity, and CSAT.
+    """
+    metrics = aggregate_evaluation_metrics(db, days=days)
+    return EvaluationMetricsResponse(**metrics)
+
+
+class AgentPerformanceResponse(BaseModel):
+    total_actions: int
+    approval_rate: float
+    correction_frequency: int
+    action_breakdown: Dict[str, int]
+
+
+@router.get("/agent-performance", response_model=AgentPerformanceResponse)
+async def get_agent_performance(
+    days: int = 30,
+    db: Session = Depends(get_db)
+):
+    """
+    Get agent performance metrics including approval rate and correction frequency.
+    """
+    metrics = get_agent_performance_metrics(db, days=days)
+    return AgentPerformanceResponse(**metrics)
 

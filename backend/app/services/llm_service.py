@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 import re
 
 from app.models import KnowledgeBase, Message, Conversation
+from app.services.rag_service import search_knowledge_base_vector
 
 # Ollama will be optional - fallback to rule-based for reliability
 OLLAMA_AVAILABLE = False
@@ -27,60 +28,34 @@ AUTO_SEND_THRESHOLD = float(os.getenv("AUTO_SEND_THRESHOLD", "0.65"))
 
 def search_knowledge_base(query: str, db: Session) -> List[Dict]:
     """
-    Simple keyword-based knowledge base search.
-    In production, would use vector embeddings for semantic search.
+    Search knowledge base using vector embeddings (with keyword fallback).
     """
-    query_lower = query.lower()
-    
-    # Get all articles
-    all_articles = db.query(KnowledgeBase).all()
-    
-    matched_articles = []
-    for article in all_articles:
-        # Simple keyword matching
-        article_text = f"{article.title} {article.content} {article.tags}".lower()
-        
-        # Count keyword matches
-        query_words = set(query_lower.split())
-        article_words = set(article_text.split())
-        common_words = query_words.intersection(article_words)
-        
-        if common_words:
-            match_score = len(common_words) / len(query_words) if query_words else 0
-            matched_articles.append({
-                "id": article.id,
-                "title": article.title,
-                "content": article.content,
-                "category": article.category,
-                "match_score": match_score
-            })
-    
-    # Sort by match score
-    matched_articles.sort(key=lambda x: x["match_score"], reverse=True)
-    
-    return matched_articles[:3]  # Return top 3 matches
+    # Use vector search (will fallback to keyword if embeddings unavailable)
+    return search_knowledge_base_vector(query, db, top_k=3)
 
 
 def calculate_confidence_score(matched_articles: List[Dict], query: str) -> float:
     """
     Calculate confidence score based on knowledge base matches.
+    Uses similarity score from vector search if available, otherwise match_score.
     
     Scoring logic:
-    - High match score (>0.5): 0.85 confidence
-    - Medium match score (0.3-0.5): 0.65 confidence
-    - Low match score (<0.3): 0.4 confidence
+    - High similarity (>0.7): 0.85 confidence
+    - Medium similarity (0.5-0.7): 0.65 confidence
+    - Low similarity (0.3-0.5): 0.4 confidence
     - No matches: 0.3 confidence
     """
     if not matched_articles:
         return 0.3
     
-    best_match_score = matched_articles[0]["match_score"]
+    # Use similarity if available (from vector search), otherwise match_score
+    best_score = matched_articles[0].get("similarity") or matched_articles[0].get("match_score", 0)
     
-    if best_match_score > 0.5:
+    if best_score > 0.7:
         return 0.85
-    elif best_match_score > 0.3:
+    elif best_score > 0.5:
         return 0.65
-    elif best_match_score > 0.1:
+    elif best_score > 0.3:
         return 0.4
     else:
         return 0.3

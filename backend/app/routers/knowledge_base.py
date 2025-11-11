@@ -10,6 +10,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models import KnowledgeBase
+from app.services.rag_service import add_article_to_vector_db
 
 router = APIRouter()
 
@@ -57,6 +58,9 @@ async def create_article(
     db.add(db_article)
     db.commit()
     db.refresh(db_article)
+    
+    # Generate and store embedding
+    add_article_to_vector_db(db_article.id, db_article.title, db_article.content, db)
     
     return db_article
 
@@ -124,6 +128,10 @@ async def update_article(
     
     db.commit()
     db.refresh(article)
+    
+    # Regenerate embedding if content changed
+    if update.content is not None or update.title is not None:
+        add_article_to_vector_db(article.id, article.title, article.content, db)
     
     return article
 

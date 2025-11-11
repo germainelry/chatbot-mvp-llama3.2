@@ -20,6 +20,7 @@ class ConversationCreate(BaseModel):
 
 class ConversationUpdate(BaseModel):
     status: Optional[ConversationStatus] = None
+    csat_score: Optional[int] = None  # Customer satisfaction score (1-5)
 
 
 class MessageResponse(BaseModel):
@@ -168,6 +169,21 @@ async def update_conversation(
         conversation.status = update.status
         if update.status == ConversationStatus.RESOLVED:
             conversation.resolved_at = datetime.utcnow()
+    
+    if update.csat_score is not None:
+        # Validate CSAT score (1-5)
+        if 1 <= update.csat_score <= 5:
+            conversation.csat_score = update.csat_score
+            # Save evaluation metric
+            from app.services.evaluation_service import save_evaluation_metrics
+            save_evaluation_metrics(
+                message_id=None,
+                conversation_id=conversation.id,
+                bleu_score=None,
+                semantic_similarity=None,
+                csat_score=update.csat_score,
+                db=db
+            )
     
     db.commit()
     db.refresh(conversation)

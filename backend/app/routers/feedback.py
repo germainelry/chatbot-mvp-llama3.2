@@ -9,7 +9,8 @@ from typing import Optional, List
 from datetime import datetime
 
 from app.database import get_db
-from app.models import Feedback, FeedbackRating, Conversation
+from app.models import Feedback, FeedbackRating, Conversation, Message, TrainingData
+from app.services.evaluation_service import evaluate_ai_response, save_evaluation_metrics
 
 router = APIRouter()
 
@@ -65,6 +66,40 @@ async def create_feedback(
     db.commit()
     db.refresh(db_feedback)
     
+    # Calculate and save evaluation metrics if agent correction is provided
+    if feedback.agent_correction and feedback.message_id:
+        message = db.query(Message).filter(Message.id == feedback.message_id).first()
+        if message:
+            # Evaluate AI response against agent correction
+            eval_metrics = evaluate_ai_response(
+                ai_response=message.content,
+                agent_correction=feedback.agent_correction
+            )
+            
+            # Save evaluation metrics
+            save_evaluation_metrics(
+                message_id=feedback.message_id,
+                conversation_id=feedback.conversation_id,
+                bleu_score=eval_metrics.get("bleu_score"),
+                semantic_similarity=eval_metrics.get("semantic_similarity"),
+                csat_score=None,
+                db=db
+            )
+            
+            # Create training data entry if correction provided
+            if feedback.agent_correction:
+                training_data = TrainingData(
+                    feedback_id=db_feedback.id,
+                    conversation_id=feedback.conversation_id,
+                    message_id=feedback.message_id,
+                    original_ai_response=message.content,
+                    agent_correction=feedback.agent_correction,
+                    intent=message.intent,
+                    processed=0
+                )
+                db.add(training_data)
+                db.commit()
+    
     return db_feedback
 
 
@@ -93,4 +128,32 @@ async def get_feedback(
         raise HTTPException(status_code=404, detail="Feedback not found")
     
     return feedback
+
+
+@router.post("/retrain")
+async def trigger_retraining(
+    db: Session = Depends(get_db)
+):
+    """
+    Manually trigger retraining pipeline.
+    Processes feedback and updates models.
+    """
+    from app.services.retraining_service import process_retraining
+    
+    results = process_retraining(db)
+    return results
+
+
+@router.get("/training-data/export")
+async def export_training_data(
+    limit: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Export training data in JSONL format.
+    """
+    from app.services.retraining_service import export_training_data_jsonl
+    
+    jsonl_data = export_training_data_jsonl(db, limit=limit)
+    return {"data": jsonl_data, "format": "jsonl"}
 

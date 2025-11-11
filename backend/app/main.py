@@ -3,7 +3,7 @@ Main FastAPI application for AI Customer Support System.
 Implements RESTful API for chatbot, agent supervision, and analytics.
 """
 from app.database import init_db
-from app.routers import ai, analytics, conversations, feedback, knowledge_base, messages
+from app.routers import ai, analytics, conversations, feedback, knowledge_base, messages, experiments
 from app.services.llm_service import OLLAMA_AVAILABLE, OLLAMA_MODEL
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +31,7 @@ app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
 app.include_router(knowledge_base.router, prefix="/api/knowledge-base", tags=["Knowledge Base"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(experiments.router, prefix="/api/experiments", tags=["Experiments"])
 
 @app.on_event("startup")
 async def startup_event():

@@ -20,6 +20,8 @@ class MessageCreate(BaseModel):
     message_type: MessageType
     confidence_score: Optional[float] = None
     original_ai_content: Optional[str] = None
+    intent: Optional[str] = None
+    agent_type: Optional[str] = None
 
 
 class MessageResponse(BaseModel):
@@ -28,6 +30,8 @@ class MessageResponse(BaseModel):
     content: str
     message_type: MessageType
     confidence_score: Optional[float]
+    intent: Optional[str] = None
+    agent_type: Optional[str] = None
     created_at: datetime
     original_ai_content: Optional[str]
 
@@ -58,7 +62,9 @@ async def create_message(
         content=message.content,
         message_type=message.message_type,
         confidence_score=message.confidence_score,
-        original_ai_content=message.original_ai_content
+        original_ai_content=message.original_ai_content,
+        intent=message.intent,
+        agent_type=message.agent_type
     )
     
     db.add(db_message)
@@ -91,6 +97,8 @@ class MessageUpdate(BaseModel):
     message_type: Optional[MessageType] = None
     confidence_score: Optional[float] = None
     original_ai_content: Optional[str] = None
+    intent: Optional[str] = None
+    agent_type: Optional[str] = None
 
 
 @router.patch("/{message_id}", response_model=MessageResponse)
@@ -117,6 +125,10 @@ async def update_message(
         message.confidence_score = update.confidence_score
     if update.original_ai_content is not None:
         message.original_ai_content = update.original_ai_content
+    if update.intent is not None:
+        message.intent = update.intent
+    if update.agent_type is not None:
+        message.agent_type = update.agent_type
     
     # Update conversation timestamp
     conversation = db.query(Conversation).filter(
