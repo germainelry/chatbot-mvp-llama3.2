@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, History, Plus, MessageSquare } from 'lucide-react';
+import { getTheme } from '../config/theme';
 import { createConversation, sendMessage, generateAIResponse, Message, getConversations, getConversationMessages } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -36,6 +37,12 @@ export default function CustomerChat() {
     }
     setCustomerId(storedCustomerId);
     loadConversationHistory(storedCustomerId);
+    
+    // Apply theme
+    const theme = getTheme();
+    if (theme) {
+      document.title = theme.brandName;
+    }
   }, []);
 
   // Scroll to bottom when messages change
@@ -169,7 +176,7 @@ export default function CustomerChat() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="py-2 px-2">
-              <CardTitle className="pb-1">Customer Support Chat</CardTitle>
+              <CardTitle className="pb-1">{getTheme().brandName || 'Customer Support Chat'}</CardTitle>
               <CardDescription className="pt-1">
                 We're here to help!
               </CardDescription>

@@ -13,6 +13,15 @@ const api = axios.create({
   },
 });
 
+// Add tenant ID to requests
+api.interceptors.request.use((config) => {
+  const tenantId = localStorage.getItem('tenant_id');
+  if (tenantId) {
+    config.headers['X-Tenant-ID'] = tenantId;
+  }
+  return config;
+});
+
 // Types
 export interface Conversation {
   id: number;
@@ -250,6 +259,185 @@ export const logAgentAction = async (data: {
 }): Promise<any> => {
   const response = await api.post('/agent-actions', data);
   return response.data;
+};
+
+// Configuration Types
+export interface TenantConfiguration {
+  tenant_id: number;
+  llm_provider: string;
+  llm_model_name: string;
+  llm_config?: Record<string, any>;
+  embedding_model: string;
+  tone: string;
+  auto_send_threshold: number;
+  ui_config?: {
+    brand_name?: string;
+    logo_url?: string;
+    primary_color?: string;
+  };
+}
+
+export interface Tenant {
+  id: number;
+  name: string;
+  slug: string;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatabaseConnection {
+  id: number;
+  connection_name: string;
+  db_type: string;
+  is_active: number;
+  created_at: string;
+}
+
+export interface TableInfo {
+  name: string;
+  columns: string[];
+}
+
+// Configuration API
+export const getTenantConfiguration = async (tenantId: number): Promise<TenantConfiguration> => {
+  const response = await api.get(`/config/tenant/${tenantId}`);
+  return response.data;
+};
+
+export const updateTenantConfiguration = async (
+  tenantId: number,
+  config: Partial<TenantConfiguration>
+): Promise<TenantConfiguration> => {
+  const response = await api.put(`/config/tenant/${tenantId}`, config);
+  return response.data;
+};
+
+export const listLLMProviders = async (): Promise<{ providers: string[] }> => {
+  const response = await api.get('/config/llm-providers');
+  return response.data;
+};
+
+export const listLLMModels = async (provider: string): Promise<{ models: string[] }> => {
+  const response = await api.get(`/config/llm-models/${provider}`);
+  return response.data;
+};
+
+export const testLLMConnection = async (data: {
+  provider: string;
+  model: string;
+  config?: Record<string, any>;
+}): Promise<{ success: boolean; message: string; test_response?: string }> => {
+  const response = await api.post('/config/test-llm', data);
+  return response.data;
+};
+
+export interface EmbeddingModel {
+  name: string;
+  description: string;
+  use_case: string;
+}
+
+export const listEmbeddingModels = async (): Promise<{ models: EmbeddingModel[] }> => {
+  const response = await api.get('/config/embedding-models');
+  return response.data;
+};
+
+// Knowledge Base Ingestion
+export const uploadPDF = async (file: File): Promise<{ message: string; articles_created: number; source_id: number }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/knowledge-base/upload/pdf', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const uploadCSV = async (file: File): Promise<{ message: string; articles_created: number; source_id: number }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/knowledge-base/upload/csv', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const uploadDocument = async (file: File): Promise<{ message: string; articles_created: number; source_id: number }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/knowledge-base/upload/document', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+// Database RAG
+export const createDatabaseConnection = async (data: {
+  connection_name: string;
+  db_type: string;
+  host: string;
+  port: number;
+  database: string;
+  username: string;
+  password: string;
+}): Promise<DatabaseConnection> => {
+  const response = await api.post('/knowledge-base/connect', data);
+  return response.data;
+};
+
+export const listDatabaseConnections = async (): Promise<DatabaseConnection[]> => {
+  const response = await api.get('/knowledge-base/connections');
+  return response.data;
+};
+
+export const getDatabaseTables = async (connectionId: number): Promise<TableInfo[]> => {
+  const response = await api.get(`/knowledge-base/connections/${connectionId}/tables`);
+  return response.data;
+};
+
+export const syncDatabaseTable = async (data: {
+  connection_id: number;
+  table_name: string;
+  columns: string[];
+}): Promise<{ message: string; articles_created: number }> => {
+  const response = await api.post('/knowledge-base/sync', data);
+  return response.data;
+};
+
+export const deleteDatabaseConnection = async (connectionId: number): Promise<void> => {
+  await api.delete(`/knowledge-base/connections/${connectionId}`);
+};
+
+// Tenant Management
+export const createTenant = async (data: {
+  name: string;
+  slug: string;
+  is_active?: number;
+}): Promise<Tenant> => {
+  const response = await api.post('/tenants', data);
+  return response.data;
+};
+
+export const listTenants = async (): Promise<Tenant[]> => {
+  const response = await api.get('/tenants');
+  return response.data;
+};
+
+export const getTenant = async (tenantId: number): Promise<Tenant> => {
+  const response = await api.get(`/tenants/${tenantId}`);
+  return response.data;
+};
+
+export const updateTenant = async (
+  tenantId: number,
+  data: Partial<Tenant>
+): Promise<Tenant> => {
+  const response = await api.put(`/tenants/${tenantId}`, data);
+  return response.data;
+};
+
+export const deleteTenant = async (tenantId: number): Promise<void> => {
+  await api.delete(`/tenants/${tenantId}`);
 };
 
 export default api;

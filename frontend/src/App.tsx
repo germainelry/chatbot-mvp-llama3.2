@@ -1,12 +1,16 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
-import { MessageSquare, BarChart3, Users, BookOpen } from 'lucide-react';
+import { MessageSquare, BarChart3, Users, BookOpen, Settings, Building2 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
 import CustomerChat from './pages/CustomerChat';
 import AgentDashboard from './pages/AgentDashboard';
 import Analytics from './pages/Analytics';
 import KnowledgeBase from './pages/KnowledgeBase';
+import Configuration from './pages/Configuration';
+import TenantManagement from './pages/TenantManagement';
 import { cn } from './components/ui/utils';
+import { useEffect } from 'react';
+import { getTheme, applyTheme } from './config/theme';
 
 function Navigation() {
   const location = useLocation();
@@ -16,6 +20,8 @@ function Navigation() {
     { path: '/agent', label: 'Agent Dashboard', icon: Users },
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen },
+    { path: '/configuration', label: 'Configuration', icon: Settings },
+    { path: '/tenants', label: 'Tenants', icon: Building2 },
   ];
 
   return (
@@ -39,7 +45,7 @@ function Navigation() {
                 size="sm"
                 className={cn(
                   "transition-colors",
-                  isActive && "bg-primary text-primary-foreground"
+                  isActive && "bg-primary text-primary-foreground hover:bg-primary/90"
                 )}
               >
                 <Link to={item.path} className="flex items-center gap-2">
@@ -56,6 +62,20 @@ function Navigation() {
 }
 
 function App() {
+  useEffect(() => {
+    // Set default tenant ID if not set
+    if (!localStorage.getItem('tenant_id')) {
+      localStorage.setItem('tenant_id', '1');
+    }
+    
+    // Load and apply theme on app start
+    const theme = getTheme();
+    if (theme) {
+      // Apply theme with empty config to use stored theme
+      applyTheme({ ui_config: { primary_color: theme.primaryColor, brand_name: theme.brandName } });
+    }
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen bg-background">
@@ -67,6 +87,8 @@ function App() {
             <Route path="/agent" element={<AgentDashboard />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/knowledge-base" element={<KnowledgeBase />} />
+            <Route path="/configuration" element={<Configuration />} />
+            <Route path="/tenants" element={<TenantManagement />} />
           </Routes>
         </main>
       </div>
