@@ -194,7 +194,7 @@ export default function AgentDashboard() {
         await logAgentAction({
           action_type: 'escalate',
           conversation_id: selectedConvId,
-          message_id: aiDraftId || null,
+          message_id: aiDraftId || undefined,
         });
       } catch (error) {
         console.error('Failed to log escalate action:', error);
@@ -383,7 +383,7 @@ export default function AgentDashboard() {
                   </Button>
                   <Button
                     size="sm"
-                    onClick={handleResolve}
+                    onClick={() => handleResolve()}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />

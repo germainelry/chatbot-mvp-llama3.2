@@ -23,7 +23,6 @@ import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Label } from '../components/ui/label';
 import { Separator } from '../components/ui/separator';
 import { PageHeader } from '../components/layout/PageHeader';
-import { cn } from '../components/ui/utils';
 
 export default function KnowledgeBase() {
   const [articles, setArticles] = useState<KnowledgeArticle[]>([]);

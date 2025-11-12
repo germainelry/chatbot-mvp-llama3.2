@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { cn } from '../ui/utils';
 
 interface PageHeaderProps {

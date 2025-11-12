@@ -5,8 +5,6 @@
  */
 import { useState, useEffect } from 'react';
 import { 
-  TrendingUp, 
-  TrendingDown, 
   MessageSquare, 
   CheckCircle, 
   AlertTriangle, 
