@@ -36,5 +36,7 @@ RUN mkdir -p uploads chroma_db
 EXPOSE 8000
 
 # Use gunicorn with uvicorn workers for production
-CMD gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000} --timeout 120
+# Default to 1 worker to reduce memory usage (uvorn workers handle async concurrency efficiently)
+# Set WORKERS env var to increase (e.g., WORKERS=2 for 2 workers) - only if you have sufficient RAM
+CMD gunicorn app.main:app -w ${WORKERS:-1} -k uvicorn.workers.UvicornWorker -b 0.0.0.0:${PORT:-8000} --timeout 120 --max-requests 1000 --max-requests-jitter 100 --worker-connections 1000
 

@@ -308,10 +308,14 @@ async def startup_event():
     else:
         print("[STARTUP] Database connection verified (AUTO_CREATE_TABLES=false)")
 
-    # Show available LLM providers
-    from app.config import get_default_llm_config
-    from app.services.llm_providers.factory import list_available_providers, get_provider
+    # Lightweight startup - only log provider info, don't verify (saves memory)
+    # Set VERIFY_LLM_ON_STARTUP=true to enable verification (uses more memory)
+    verify_llm = os.getenv("VERIFY_LLM_ON_STARTUP", "false").lower() == "true"
+    
     import logging
+
+    from app.config import get_default_llm_config
+    from app.services.llm_providers.factory import list_available_providers
     
     logger = logging.getLogger(__name__)
     
@@ -321,61 +325,65 @@ async def startup_event():
     print(f"[LLM] Available providers: {', '.join(available_providers) if available_providers else 'none'}")
     print(f"[LLM] Default provider: {default_config['provider']} ({default_config['model']})")
     
-    # Verify default model is accessible
-    default_provider_name = default_config['provider']
-    default_model = default_config['model']
-    
-    logger.info(
-        f"[STARTUP] Verifying default LLM configuration - Provider: {default_provider_name}, "
-        f"Model: {default_model}"
-    )
-    
-    try:
-        default_provider = get_provider(default_provider_name, {"model": default_model})
-        if default_provider:
-            is_available = default_provider.is_available()
-            actual_model = default_model
-            if hasattr(default_provider, 'get_active_model'):
-                try:
-                    actual_model = default_provider.get_active_model()
-                except:
-                    pass
-            elif hasattr(default_provider, 'model'):
-                actual_model = getattr(default_provider, 'model', default_model)
-            elif hasattr(default_provider, 'model_name'):
-                actual_model = getattr(default_provider, 'model_name', default_model)
-            
-            if is_available:
-                if actual_model == default_model:
-                    print(f"[LLM] [OK] Default model verified: {default_provider_name}/{actual_model}")
-                    logger.info(
-                        f"[STARTUP] Default model verified - Provider: {default_provider_name}, "
-                        f"Model: {actual_model}"
-                    )
+    # Only verify if explicitly enabled (uses memory)
+    if verify_llm:
+        from app.services.llm_providers.factory import get_provider
+        default_provider_name = default_config['provider']
+        default_model = default_config['model']
+        
+        logger.info(
+            f"[STARTUP] Verifying default LLM configuration - Provider: {default_provider_name}, "
+            f"Model: {default_model}"
+        )
+        
+        try:
+            default_provider = get_provider(default_provider_name, {"model": default_model})
+            if default_provider:
+                is_available = default_provider.is_available()
+                actual_model = default_model
+                if hasattr(default_provider, 'get_active_model'):
+                    try:
+                        actual_model = default_provider.get_active_model()
+                    except:
+                        pass
+                elif hasattr(default_provider, 'model'):
+                    actual_model = getattr(default_provider, 'model', default_model)
+                elif hasattr(default_provider, 'model_name'):
+                    actual_model = getattr(default_provider, 'model_name', default_model)
+                
+                if is_available:
+                    if actual_model == default_model:
+                        print(f"[LLM] [OK] Default model verified: {default_provider_name}/{actual_model}")
+                        logger.info(
+                            f"[STARTUP] Default model verified - Provider: {default_provider_name}, "
+                            f"Model: {actual_model}"
+                        )
+                    else:
+                        print(f"[LLM] [WARNING] Default model mismatch: configured={default_model}, actual={actual_model}")
+                        logger.warning(
+                            f"[STARTUP] Default model mismatch - Configured: {default_model}, "
+                            f"Actual: {actual_model}"
+                        )
                 else:
-                    print(f"[LLM] [WARNING] Default model mismatch: configured={default_model}, actual={actual_model}")
+                    print(f"[LLM] [WARNING] Default provider/model may not be available: {default_provider_name}/{default_model}")
                     logger.warning(
-                        f"[STARTUP] Default model mismatch - Configured: {default_model}, "
-                        f"Actual: {actual_model}"
+                        f"[STARTUP] Default provider/model may not be available - "
+                        f"Provider: {default_provider_name}, Model: {default_model}"
                     )
             else:
-                print(f"[LLM] [WARNING] Default provider/model may not be available: {default_provider_name}/{default_model}")
+                print(f"[LLM] [WARNING] Default provider not found: {default_provider_name}")
                 logger.warning(
-                    f"[STARTUP] Default provider/model may not be available - "
-                    f"Provider: {default_provider_name}, Model: {default_model}"
+                    f"[STARTUP] Default provider not found - Provider: {default_provider_name}"
                 )
-        else:
-            print(f"[LLM] [WARNING] Default provider not found: {default_provider_name}")
+        except Exception as e:
+            print(f"[LLM] [WARNING] Error verifying default model: {e}")
             logger.warning(
-                f"[STARTUP] Default provider not found - Provider: {default_provider_name}"
+                f"[STARTUP] Error verifying default model - Provider: {default_provider_name}, "
+                f"Model: {default_model}, Error: {str(e)}",
+                exc_info=True
             )
-    except Exception as e:
-        print(f"[LLM] [WARNING] Error verifying default model: {e}")
-        logger.warning(
-            f"[STARTUP] Error verifying default model - Provider: {default_provider_name}, "
-            f"Model: {default_model}, Error: {str(e)}",
-            exc_info=True
-        )
+    else:
+        print("[LLM] [INFO] LLM verification skipped on startup (set VERIFY_LLM_ON_STARTUP=true to enable)")
     
     # Legacy Ollama check for backward compatibility
     if OLLAMA_AVAILABLE:
